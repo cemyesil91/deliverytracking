@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  DRIVER
+  SELLER
+}
+
+enum ProductSource {
+  BAKERY
+  MILK_PRODUCER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  deliveriesAsDriver DeliveryRecord[] @relation("DriverDeliveries")
+  deliveriesAsSeller DeliveryRecord[] @relation("SellerDeliveries")
+  sellerPrices       SellerPrice[]
+  debtRecords        DebtRecord[]
+  paymentRecords     PaymentRecord[]
+}
+
+model Product {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  source    ProductSource
+  unit      String
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+
+  deliveryRecords DeliveryRecord[]
+  sellerPrices    SellerPrice[]
+}
+
+model SellerPrice {
+  sellerId   String
+  productId  String
+  price      Decimal  @db.Decimal(10, 2)
+  updatedAt  DateTime @updatedAt
+
+  seller  User    @relation(fields: [sellerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@id([sellerId, productId])
+}
+
+model DeliveryRecord {
+  id          String   @id @default(cuid())
+  driverId    String
+  sellerId    String
+  productId   String
+  quantity    Int
+  deliveredAt DateTime
+  createdAt   DateTime @default(now())
+
+  driver  User    @relation("DriverDeliveries", fields: [driverId], references: [id])
+  seller  User    @relation("SellerDeliveries", fields: [sellerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model DebtRecord {
+  id        String   @id @default(cuid())
+  sellerId  String
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+
+  seller User @relation(fields: [sellerId], references: [id])
+}
+
+model PaymentRecord {
+  id        String   @id @default(cuid())
+  sellerId  String
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+
+  seller User @relation(fields: [sellerId], references: [id])
+}
