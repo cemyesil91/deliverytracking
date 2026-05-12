@@ -12,7 +12,11 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// Allow the Netlify frontend origin (set CLIENT_ORIGIN in Railway env vars)
+// Falls back to localhost for local development
+const allowedOrigin = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
+
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -1,10 +1,14 @@
 /**
  * Axios API client with JWT auth and automatic token refresh.
+ * In production, VITE_API_URL points to the Railway backend.
+ * In development, Vite's proxy handles /api and /auth → localhost:3001.
  */
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL ?? '';
+
 const api = axios.create({
-  baseURL: '/',
+  baseURL: BASE_URL,
   withCredentials: true,
 });
 
@@ -25,7 +29,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const { data } = await axios.post('/auth/refresh', {}, { withCredentials: true });
+        const { data } = await axios.post(
+          `${BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
         setAccessToken(data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);

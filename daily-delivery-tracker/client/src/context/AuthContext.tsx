@@ -11,12 +11,14 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const BASE_URL = import.meta.env.VITE_API_URL ?? '';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   const login = useCallback(async (username: string, password: string) => {
     const { data } = await axios.post<{ accessToken: string }>(
-      '/auth/login',
+      `${BASE_URL}/auth/login`,
       { username, password },
       { withCredentials: true }
     );
@@ -29,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await axios.post('/auth/logout', {}, { withCredentials: true });
+      await axios.post(`${BASE_URL}/auth/logout`, {}, { withCredentials: true });
     } catch {
       // ignore errors on logout
     }
